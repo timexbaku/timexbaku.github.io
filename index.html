@@ -25,47 +25,53 @@
         const db = getFirestore(app);
 
         const grid = document.getElementById('mainGrid');
+        const adminList = document.getElementById('adminProductList');
         const q = query(collection(db, "watches"), orderBy("createdAt", "desc"));
 
+        // CANLI YENİLƏNMƏ (Həm vitrin, həm admin siyahısı üçün)
         onSnapshot(q, (snapshot) => {
             grid.innerHTML = "";
+            adminList.innerHTML = "";
+            
             snapshot.forEach((d) => {
                 const item = d.data();
                 const id = d.id;
-                grid.innerHTML += `
-                    <div class="bg-zinc-900 rounded-[2.5rem] overflow-hidden border border-zinc-800 hover:border-[#d4af37] transition-all duration-700 group relative">
-                        <button onclick="adminDelete('${id}')" class="absolute top-5 right-5 z-30 bg-black/50 hover:bg-red-600 p-2 rounded-full text-white/30 hover:text-white transition-all duration-300 backdrop-blur-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                        </button>
 
+                // Müştəri üçün Vitrin
+                grid.innerHTML += `
+                    <div class="bg-zinc-900 rounded-[2.5rem] overflow-hidden border border-zinc-800 hover:border-[#d4af37] transition-all duration-700 group">
                         <div class="overflow-hidden">
                             <img src="${item.img}" class="w-full h-[400px] object-cover group-hover:scale-105 transition duration-700">
                         </div>
                         <div class="p-8 bg-black/40 backdrop-blur-md">
                             <h3 class="luxury-font text-2xl mb-2 text-white">${item.name}</h3>
                             <p class="text-[#d4af37] font-bold text-xl mb-3">${item.price} AZN</p>
-                            <p class="text-zinc-400 text-sm mb-6 leading-relaxed h-12 overflow-hidden">${item.desc || 'Premium model.'}</p>
-                            <a href="https://wa.me/9943220807?text=Salam, ${item.name} üçün yazıram." target="_blank"
+                            <p class="text-zinc-400 text-sm mb-6 leading-relaxed h-12 overflow-hidden">${item.desc || ''}</p>
+                            <a href="https://wa.me/9943220807?text=Salam, ${item.name} saatı üçün yazıram." target="_blank"
                                class="block text-center py-4 border border-[#d4af37] text-[#d4af37] rounded-full font-bold hover:bg-[#d4af37] hover:text-black transition uppercase tracking-widest text-xs">
                                 SİFARİŞ ET
                             </a>
                         </div>
                     </div>`;
+
+                // Admin üçün Silmə Siyahısı
+                adminList.innerHTML += `
+                    <div class="flex items-center justify-between bg-black p-3 rounded-lg border border-zinc-800">
+                        <div class="flex items-center gap-3">
+                            <img src="${item.img}" class="w-10 h-10 object-cover rounded">
+                            <span class="text-xs text-zinc-300 truncate w-32">${item.name}</span>
+                        </div>
+                        <button onclick="deleteProduct('${id}')" class="bg-red-900/50 text-red-500 px-3 py-1 rounded text-[10px] hover:bg-red-600 hover:text-white transition">SİL</button>
+                    </div>`;
             });
         });
 
-        // SİLMƏ FUNKSİYASI
-        window.adminDelete = async function(id) {
-            const pass = prompt("Bu elanı silmək üçün silinmə kodunu yazın:");
-            if (pass === "sil0202") {
-                if(confirm("Elan birdəfəlik silinsin?")) {
+        // SİLMƏ FUNKSİYASI (Yalnız Admin Paneldən çağırılır)
+        window.deleteProduct = async function(id) {
+            if(confirm("Bu elanı silməyə əminsən?")) {
+                try {
                     await deleteDoc(doc(db, "watches", id));
-                    alert("Uğurla silindi.");
-                }
-            } else if (pass !== null) {
-                alert("Bu funksiyanı yalnız Admin istifadə edə bilər!");
+                } catch (err) { alert("Xəta: " + err.message); }
             }
         }
 
@@ -75,7 +81,7 @@
             const desc = document.getElementById('pDesc').value;
             const file = document.getElementById('pFile').files[0];
 
-            if(!name || !price || !file) return alert("Ad, qiymət və şəkil mütləqdir!");
+            if(!name || !price || !file) return alert("Məlumatları doldurun!");
 
             const reader = new FileReader();
             reader.onload = async function(e) {
@@ -84,7 +90,6 @@
                         name, price, desc, img: e.target.result, createdAt: new Date()
                     });
                     alert("Uğurla əlavə edildi!");
-                    document.getElementById('secretPanel').style.display = 'none';
                     document.getElementById('pName').value = "";
                     document.getElementById('pPrice').value = "";
                     document.getElementById('pDesc').value = "";
@@ -95,10 +100,13 @@
     </script>
 
     <style>
-        body { background-color: #000; color: #fff; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; min-height: 100vh; }
+        body { background-color: #000; color: #fff; font-family: 'Inter', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
         .luxury-font { font-family: 'Cinzel', serif; }
-        #secretPanel { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.99); z-index: 1000; align-items: center; justify-content: center; backdrop-blur: 20px; }
+        #secretPanel { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.99); z-index: 1000; align-items: center; justify-content: center; backdrop-blur: 20px; padding: 20px; }
+        .admin-box { max-height: 90vh; overflow-y: auto; width: 100%; max-width: 500px; }
         footer { margin-top: auto; padding: 40px; text-align: center; color: #0a0a0a; font-size: 10px; cursor: pointer; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -111,18 +119,28 @@
 
     <main class="container mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 flex-grow" id="mainGrid"></main>
 
-    <footer id="hiddenClickZone">© Admin Access Zone</footer>
+    <footer id="hiddenClickZone">© Secure System Entry</footer>
 
     <div id="secretPanel">
-        <div class="bg-zinc-900 p-10 rounded-[2.5rem] border border-[#d4af37]/20 w-full max-w-md shadow-2xl">
-            <h2 class="text-lg text-[#d4af37] font-bold luxury-font uppercase mb-6 text-center">YENİ MODEL ƏLAVƏ ET</h2>
-            <div class="space-y-4">
-                <input type="text" id="pName" placeholder="Brend və Model" class="w-full p-4 bg-black rounded-xl border border-zinc-800 outline-none focus:border-[#d4af37]">
-                <input type="number" id="pPrice" placeholder="Qiymət (AZN)" class="w-full p-4 bg-black rounded-xl border border-zinc-800 outline-none focus:border-[#d4af37]">
-                <textarea id="pDesc" placeholder="Açıqlama və Kampaniyalar" class="w-full p-4 bg-black rounded-xl border border-zinc-800 outline-none focus:border-[#d4af37] h-24 resize-none"></textarea>
-                <input type="file" id="pFile" accept="image/*" class="w-full text-xs text-zinc-500">
-                <button onclick="uploadToDatabase()" class="w-full py-4 bg-[#d4af37] text-black font-black rounded-xl uppercase tracking-widest">SİSTEMƏ YAZ</button>
-                <button onclick="document.getElementById('secretPanel').style.display='none'" class="w-full text-zinc-600 text-[10px] mt-2">İPTAL</button>
+        <div class="admin-box bg-zinc-900 p-8 rounded-[2.5rem] border border-[#d4af37]/20 shadow-2xl">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-lg text-[#d4af37] font-bold luxury-font uppercase tracking-widest">İdarəetmə</h2>
+                <button onclick="document.getElementById('secretPanel').style.display='none'" class="text-zinc-500 hover:text-white">✕</button>
+            </div>
+            
+            <div class="space-y-4 mb-10 pb-10 border-b border-zinc-800">
+                <p class="text-[10px] text-zinc-500 uppercase tracking-widest mb-2">Yeni Elan</p>
+                <input type="text" id="pName" placeholder="Brend və Model" class="w-full p-4 bg-black rounded-xl border border-zinc-800 outline-none focus:border-[#d4af37] text-sm">
+                <input type="number" id="pPrice" placeholder="Qiymət (Rəqəmlə)" class="w-full p-4 bg-black rounded-xl border border-zinc-800 outline-none focus:border-[#d4af37] text-sm">
+                <textarea id="pDesc" placeholder="Açıqlama (Kampaniya, Çatdırılma və s.)" class="w-full p-4 bg-black rounded-xl border border-zinc-800 outline-none focus:border-[#d4af37] h-24 resize-none text-sm"></textarea>
+                <input type="file" id="pFile" accept="image/*" class="w-full text-[10px] text-zinc-400">
+                <button onclick="uploadToDatabase()" class="w-full py-4 bg-[#d4af37] text-black font-black rounded-xl uppercase text-xs tracking-widest hover:bg-orange-500 transition">Sayta Yerləşdir</button>
+            </div>
+
+            <div>
+                <p class="text-[10px] text-zinc-500 uppercase tracking-widest mb-4">Mövcud Elanları Sil</p>
+                <div id="adminProductList" class="space-y-3">
+                    </div>
             </div>
         </div>
     </div>
@@ -135,7 +153,9 @@
             if (currentTime - lastClickTime < 500) { clickCount++; } else { clickCount = 1; }
             lastClickTime = currentTime;
             if (clickCount === 3) {
-                if(prompt("Giriş:") === "qaqa0202qaqa0202") document.getElementById('secretPanel').style.display = 'flex';
+                if(prompt("Admin şifrəsi:") === "qaqa0202qaqa0202") {
+                    document.getElementById('secretPanel').style.display = 'flex';
+                }
                 clickCount = 0;
             }
         });
