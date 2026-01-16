@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeXBaku | Luxury Collection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDkY51jHCvchXjlk0N005SaRcneCv_fWX0",
+            authDomain: "timexbaku-a2c66.firebaseapp.com",
+            projectId: "timexbaku-a2c66",
+            storageBucket: "timexbaku-a2c66.firebasestorage.app",
+            messagingSenderId: "837389958136",
+            appId: "1:837389958136:web:6de36b6d6049783051f40d",
+            measurementId: "G-52Q733P2FJ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Məhsulları gətir
+        const grid = document.getElementById('mainGrid');
+        const q = query(collection(db, "watches"), orderBy("createdAt", "desc"));
+
+        onSnapshot(q, (snapshot) => {
+            grid.innerHTML = "";
+            snapshot.forEach((doc) => {
+                const item = doc.data();
+                grid.innerHTML += `
+                    <div class="bg-zinc-900 rounded-[2.5rem] overflow-hidden border border-zinc-800 hover:border-[#d4af37] transition-all duration-700 group">
+                        <img src="${item.img}" class="w-full h-[450px] object-cover group-hover:scale-105 transition duration-700">
+                        <div class="p-10 bg-black/40 backdrop-blur-md">
+                            <h3 style="font-family: 'Cinzel';" class="text-2xl mb-2 text-white">${item.name}</h3>
+                            <p class="text-orange-500 font-bold text-xl mb-8">${item.price}</p>
+                            <a href="https://wa.me/9943220807?text=Salam, ${item.name} saatı üçün yazıram." target="_blank"
+                               class="block text-center py-5 border border-[#d4af37] text-[#d4af37] rounded-full font-bold hover:bg-[#d4af37] hover:text-black transition uppercase tracking-widest text-sm">
+                                SİFARİŞ ET
+                            </a>
+                        </div>
+                    </div>`;
+            });
+        });
+
+        // Admin Yükləmə Funksiyası
+        window.uploadToDatabase = function() {
+            const name = document.getElementById('pName').value;
+            const price = document.getElementById('pPrice').value;
+            const file = document.getElementById('pFile').files[0];
+
+            if(!name || !price || !file) return alert("Bütün xanaları doldurun!");
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const base64Img = e.target.result;
+                try {
+                    await addDoc(collection(db, "watches"), {
+                        name: name,
+                        price: price,
+                        img: base64Img,
+                        createdAt: new Date()
+                    });
+                    alert("Uğurla əlavə edildi!");
+                    document.getElementById('secretPanel').style.display = 'none';
+                } catch (err) { alert("Xəta: " + err.message); }
+            };
+            reader.readAsDataURL(file);
+        }
+    </script>
+
+    <style>
+        body { background-color: #000; color: #fff; font-family: 'Inter', sans-serif; }
+        .luxury-font { font-family: 'Cinzel', serif; }
+        #secretPanel { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 1000; align-items: center; justify-content: center; backdrop-blur: 10px; }
+    </style>
+</head>
+<body>
+
+    <nav class="py-12 text-center border-b border-zinc-900">
+        <h1 class="text-4xl tracking-[0.5em] font-bold luxury-font uppercase">
+            TIME<span class="text-[#d4af37]">X</span><span class="text-orange-600">BAKU</span>
+        </h1>
+    </nav>
+
+    <main class="container mx-auto px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16 py-10" id="mainGrid"></main>
+
+    <div id="secretPanel">
+        <div class="bg-zinc-900 p-12 rounded-[3rem] border border-[#d4af37]/30 w-full max-w-lg">
+            <h2 class="text-2xl mb-8 text-[#d4af37] font-bold text-center luxury-font uppercase">Yeni Saat Əlavə Et</h2>
+            <div class="space-y-6">
+                <input type="text" id="pName" placeholder="Saat Brendi" class="w-full p-5 bg-black rounded-2xl border border-zinc-800 outline-none text-white">
+                <input type="text" id="pPrice" placeholder="Qiymət" class="w-full p-5 bg-black rounded-2xl border border-zinc-800 outline-none text-white">
+                <input type="file" id="pFile" accept="image/*" class="w-full text-zinc-400">
+                <button onclick="uploadToDatabase()" class="w-full py-5 bg-[#d4af37] text-black font-black rounded-2xl uppercase tracking-widest shadow-lg transition">Sayta Yerləşdir</button>
+                <button onclick="document.getElementById('secretPanel').style.display='none'" class="w-full mt-4 text-zinc-600 text-xs">Bağla</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let keys = {};
+        document.onkeydown = function(e) {
+            keys[e.key.toLowerCase()] = true;
+            if(keys['q'] && keys['a']) {
+                if(prompt("Kod:") === "qaqa0202qaqa0202") {
+                    document.getElementById('secretPanel').style.display = 'flex';
+                }
+            }
+        };
+        document.onkeyup = function(e) { keys[e.key.toLowerCase()] = false; };
+    </script>
+</body>
+</html>
