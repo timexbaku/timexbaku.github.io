@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TimexBaku | Official</title>
+    <title>TimexBaku | Edition</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -40,10 +40,7 @@
 
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
         .p-card { background: var(--glass); border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; position: relative; transition: 0.3s; }
-        .p-card:hover { border-color: var(--neon); transform: translateY(-5px); }
         .p-img { width: 100%; height: 240px; object-fit: cover; background: #111; }
-        
-        #adminPanel { position: fixed; inset: 0; background: #000; z-index: 2000; display: none; padding: 50px; overflow-y: auto; }
         .signature { position: fixed; bottom: 10px; right: 10px; font-size: 10px; color: #1a1a1a; cursor: pointer; }
     </style>
 </head>
@@ -60,7 +57,7 @@
         <input type="text" id="regName" placeholder="İstifadəçi adı">
         <input type="password" id="regPass" placeholder="Şifrə">
         <input type="text" id="regPhone" value="+994" maxlength="13">
-        <button class="btn" onclick="register()">QEYD OL VƏ DAXİL OL</button>
+        <button class="btn" onclick="register()">QEYD OL</button>
         <p style="text-align:center; margin-top:20px; font-size:13px;">Hesabın var? <span onclick="showPage('loginPage')" style="color:var(--neon); cursor:pointer;">Giriş et</span></p>
     </div>
 </div>
@@ -75,41 +72,31 @@
 </div>
 
 <div id="homePage" class="page">
-    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:30px;">
-        <h2 style="font-family: Orbitron;">GLOBAL MARKET</h2>
-        <input type="text" id="searchInput" placeholder="Axtar..." style="width:200px; margin:0;" onkeyup="searchAds()">
-    </div>
+    <h2 style="font-family: Orbitron; margin-bottom: 30px;">GLOBAL MARKET</h2>
     <div class="grid" id="mainGrid"></div>
 </div>
 
 <div id="shopPage" class="page">
     <div class="card" id="setupShopCard">
-        <h3 style="color:var(--neon)">MAĞAZA QURMAQ</h3>
-        <p style="font-size: 13px; color: #ccc; margin: 15px 0;">Elan paylaşmaq üçün mağazanızı aktivləşdirin.</p>
+        <h3 style="color:var(--neon)">MAĞAZA AKTİVASİYASI</h3>
+        <p style="font-size: 13px; color: #ccc; margin: 15px 0;">Zəhmət olmasa mağaza adını daxil edib təsdiqləyin.</p>
         <input type="text" id="shopNameInput" placeholder="Mağaza adınız">
-        <button class="btn" onclick="setupShop()">MAĞAZANI TƏSDİQLƏ</button>
+        <button class="btn" onclick="setupShop()">TƏSDİQLƏ</button>
     </div>
     <div id="postAdSection" style="display:none;">
         <div class="card">
             <h3 style="color:var(--neon); margin-bottom:15px;">YENİ ELAN</h3>
             <input type="text" id="pTitle" placeholder="Məhsul adı">
             <input type="number" id="pPrice" placeholder="Qiymət (AZN)">
-            <input type="file" id="pFiles" accept="image/*" id="fileInput">
+            <input type="file" id="pFiles" accept="image/*">
             <button class="btn" onclick="createAd()">PAYLAŞ</button>
         </div>
     </div>
 </div>
 
-<div id="adminPanel">
-    <h1 style="color:var(--neon); font-family: Orbitron;">CONTROL CENTER</h1>
-    <div id="adminContent"></div>
-    <button class="btn" onclick="closeAdmin()" style="margin-top:20px; background:red;">BAĞLA</button>
-</div>
-
 <div class="signature" onclick="adminTrigger()">ismayilismayilov</div>
 
 <script>
-    // SƏNİN FİRƏBASE MƏLUMATLARIN
     const firebaseConfig = {
         apiKey: "AIzaSyBxDEz5-5JBRKWruTErQ5GmMCX9we0iP00",
         authDomain: "bitbattle-64c13.firebaseapp.com",
@@ -123,7 +110,6 @@
     const db = firebase.firestore();
 
     let currentUser = JSON.parse(localStorage.getItem('timexUser')) || null;
-    let adminClicks = 0;
 
     function showPage(id) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -136,8 +122,8 @@
         const nav = document.getElementById('navButtons');
         if(currentUser) {
             nav.innerHTML = `
-                <span style="color:var(--neon); font-weight:bold; margin-right:15px;">${currentUser.id}</span>
-                <button class="btn" style="width:auto; padding:8px 15px" onclick="showPage('shopPage')"><i class="fas fa-plus"></i></button>
+                <span style="color:var(--neon); margin-right:15px; font-weight:bold">${currentUser.id}</span>
+                <button class="btn" style="width:auto; padding:8px 15px" onclick="showPage('shopPage')"><i class="fas fa-store"></i></button>
                 <button onclick="logout()" style="background:none; border:none; color:white; margin-left:15px; cursor:pointer"><i class="fas fa-power-off"></i></button>`;
         }
     }
@@ -158,50 +144,59 @@
         const phone = document.getElementById('regPhone').value.trim();
         const id = "t" + Math.floor(10000 + Math.random() * 90000);
 
-        if(!name || !pass || phone.length < 13) return alert("Məlumatları tam doldurun!");
+        if(!name || !pass) return alert("Xanaları doldurun!");
 
         const userObj = { id, name, pass, phone, hasShop: false, status: 'Active' };
-        
         try {
             await db.collection("users").doc(id).set(userObj);
             currentUser = userObj;
             localStorage.setItem('timexUser', JSON.stringify(currentUser));
             showPage('homePage');
-            loadAds();
-        } catch(e) { alert("Xəta!"); }
+        } catch(e) { alert("Xəta: Verilənlər bazasına yazıla bilmədi."); }
     }
 
     async function login() {
         const name = document.getElementById('logName').value;
         const pass = document.getElementById('logPass').value;
         const res = await db.collection("users").where("name", "==", name).where("pass", "==", pass).get();
-        
-        if(res.empty) return alert("Yanlış məlumat!");
+        if(res.empty) return alert("Məlumatlar səhvdir!");
         currentUser = res.docs[0].data();
         localStorage.setItem('timexUser', JSON.stringify(currentUser));
         showPage('homePage');
         loadAds();
     }
 
+    // MAĞAZA TƏSDİQLƏMƏ FUNKSİYASI (Yeniləndi)
     async function setupShop() {
         const sName = document.getElementById('shopNameInput').value;
         if(!sName) return alert("Mağaza adı yazın!");
+        if(!currentUser) return alert("Əvvəlcə giriş edin!");
 
         try {
-            await db.collection("users").doc(currentUser.id).update({ hasShop: true, shopName: sName });
+            // Həm bazada, həm də yerli yaddaşda statusu yeniləyirik
+            await db.collection("users").doc(currentUser.id).set({
+                ...currentUser,
+                hasShop: true,
+                shopName: sName
+            }, { merge: true });
+
             currentUser.hasShop = true;
+            currentUser.shopName = sName;
             localStorage.setItem('timexUser', JSON.stringify(currentUser));
-            alert("Mağaza aktivdir!");
+            
+            alert("Mağaza uğurla təsdiqləndi!");
             checkShopUI();
-        } catch(e) { alert("Xəta!"); }
+        } catch(e) { 
+            console.error(e);
+            alert("Xəta: Mağaza təsdiqlənə bilmədi. Firestore qaydalarını (Rules) yoxlayın."); 
+        }
     }
 
     async function createAd() {
         const title = document.getElementById('pTitle').value;
         const price = document.getElementById('pPrice').value;
         const file = document.getElementById('pFiles').files[0];
-
-        if(!file || !title || !price) return alert("Xanaları doldurun!");
+        if(!file || !title) return alert("Məlumatları doldurun!");
 
         const reader = new FileReader();
         reader.onload = async function(e) {
@@ -229,22 +224,13 @@
                     <div style="padding:15px">
                         <h4>${ad.title}</h4>
                         <div style="color:var(--neon); font-size:20px; font-weight:bold">${ad.price} AZN</div>
-                        <button class="btn" style="margin-top:10px" onclick="window.open('https://wa.me/${ad.sellerPhone}')">WP İLƏ AL</button>
+                        <button class="btn" style="margin-top:10px" onclick="window.open('https://wa.me/${ad.sellerPhone}')">ALMAQ</button>
                     </div>
                 </div>`;
         });
     }
 
     function logout() { localStorage.removeItem('timexUser'); location.reload(); }
-    
-    function adminTrigger() {
-        adminClicks++;
-        if(adminClicks === 5) {
-            if(prompt("Şifrə:") === 'qaqa!!02""02') document.getElementById('adminPanel').style.display = 'block';
-            adminClicks = 0;
-        }
-    }
-    function closeAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
 
     if(currentUser) { showPage('homePage'); loadAds(); }
 </script>
